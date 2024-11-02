@@ -25,7 +25,7 @@ func (rs RunnersService) CreateRunner(runner *models.Runner) (*models.Runner, *m
 	if err != nil {
 		return nil, err
 	}
-	return rs.runnersRepository.CreateRunner
+	return rs.runnersRepository.CreateRunner(runner)
 }
 
 func validateRunner(runner *models.Runner) *models.ResponseError {
