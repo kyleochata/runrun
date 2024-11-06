@@ -6,13 +6,14 @@ SET standard_conforming_strings = on;
 SET client_min_messages = warning;
 SET row_security = off;
 CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+-- need for uuid_generate_v1mc()
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA pg_catalog;
 SET search_path = public, pg_catalog;
 SET default_tablespace = '';
 
 -- runners
 CREATE TABLE runners (
-  -- uuid_generate_vlmc() creates a new UUID during INSERT cmd.
+  -- uuid_generate_v1mc() creates a new UUID during INSERT cmd.
   id uuid NOT NULL DEFAULT uuid_generate_v1mc(),
   first_name text NOT NULL,
   last_name text NOT NULL,

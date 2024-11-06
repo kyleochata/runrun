@@ -148,3 +148,7 @@ func (rs ResultsService) DeleteResult(resultId string) *models.ResponseError {
 	}
 	return nil
 }
+
+func parseRaceResult(strTime string) (time.Duration, error) {
+	return time.ParseDuration(strTime[0:2] + "h" + strTime[3:5] + "m" + strTime[6:8] + "s")
+}
