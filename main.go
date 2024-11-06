@@ -2,8 +2,9 @@ package main
 
 import (
 	"log"
-	"runners-postgresql/config"
-	"runners-postgresql/server"
+
+	"github.com/kyleochata/runrun/config"
+	"github.com/kyleochata/runrun/server"
 
 	_ "github.com/lib/pq"
 )

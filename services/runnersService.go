@@ -2,10 +2,11 @@ package services
 
 import (
 	"net/http"
-	"runners-postgresql/models"
-	"runners-postgresql/repositories"
 	"strconv"
 	"time"
+
+	"github.com/kyleochata/runrun/models"
+	"github.com/kyleochata/runrun/repositories"
 )
 
 type RunnersService struct {
@@ -97,7 +98,7 @@ func (rs RunnersService) GetRunner(runnerId string) (*models.Runner, *models.Res
 		return nil, err
 	}
 
-	results, err := rs.resultsRepository.GetRunner(runnerId)
+	results, err := rs.resultsRepository.GetAllRunnersResults(runnerId)
 	if err != nil {
 		return nil, err
 	}

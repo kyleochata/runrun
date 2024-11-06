@@ -2,9 +2,11 @@ package services
 
 import (
 	"net/http"
-	"runners-postgresql/models"
-	"runners-postgresql/repositories"
+
 	"time"
+
+	"github.com/kyleochata/runrun/models"
+	"github.com/kyleochata/runrun/repositories"
 )
 
 type ResultsService struct {
@@ -58,13 +60,13 @@ func (rs ResultsService) CreateResult(result *models.Result) (*models.Result, *m
 			Status:  http.StatusBadRequest,
 		}
 	}
-	res, err := rs.resultsRepository.CreateResult(result)
-	if err != nil {
-		return nil, err
+	res, resErr := rs.resultsRepository.CreateResult(result)
+	if resErr != nil {
+		return nil, resErr
 	}
-	runner, err := rs.runnersRepository.GetRunner(result.RunnerID)
-	if err != nil {
-		return nil, err
+	runner, runErr := rs.runnersRepository.GetRunner(result.RunnerID)
+	if runErr != nil {
+		return nil, runErr
 	}
 	if runner == nil {
 		return nil, &models.ResponseError{
@@ -83,7 +85,7 @@ func (rs ResultsService) CreateResult(result *models.Result) (*models.Result, *m
 			}
 		}
 		if raceResult < personalBest {
-			runner.PersonalBest = result.raceResult
+			runner.PersonalBest = result.RaceResult
 		}
 	}
 
@@ -103,9 +105,9 @@ func (rs ResultsService) CreateResult(result *models.Result) (*models.Result, *m
 			}
 		}
 	}
-	err = rs.runnersRepository.UpdateRunnerResults(runner)
-	if err != nil {
-		return nil, err
+	updateRunnerErr := rs.runnersRepository.UpdateRunnerResults(runner)
+	if updateRunnerErr != nil {
+		return nil, updateRunnerErr
 	}
 	return res, nil
 }
@@ -117,13 +119,20 @@ func (rs ResultsService) DeleteResult(resultId string) *models.ResponseError {
 			Status:  http.StatusBadRequest,
 		}
 	}
-	result, err := rs.resultsRepository.DeleteResult(resultId)
+	err := repositories.BeginTransaction(rs.runnersRepository, rs.resultsRepository)
 	if err != nil {
-		return err
+		return &models.ResponseError{
+			Message: "Failed to start transaction",
+			Status:  http.StatusBadRequest,
+		}
 	}
-	runner, err := rs.runnersRepository.GetRunner(result.RunnerId)
-	if err != nil {
-		return err
+	result, resErr := rs.resultsRepository.DeleteResult(resultId)
+	if resErr != nil {
+		return resErr
+	}
+	runner, runErr := rs.runnersRepository.GetRunner(result.RunnerID)
+	if runErr != nil {
+		return runErr
 	}
 	if runner.PersonalBest == result.RaceResult {
 		personalBest, err := rs.resultsRepository.GetPersonalBestResults(result.RunnerID)
@@ -135,17 +144,19 @@ func (rs ResultsService) DeleteResult(resultId string) *models.ResponseError {
 
 	//Check if the deleted result is season best for runner
 	currYear := time.Now().Year()
-	if runner.SeasonBest == currYear && result.Year == currYear {
+	if runner.SeasonBest == result.RaceResult && result.Year == currYear {
 		seasonBest, err := rs.resultsRepository.GetSeasonBestResults(result.RunnerID, result.Year)
 		if err != nil {
 			return err
 		}
 		runner.SeasonBest = seasonBest
 	}
-	err = rs.runnersRepository.UpdateRunnerResults(runner)
-	if err != nil {
-		return err
+	resErr = rs.runnersRepository.UpdateRunnerResults(runner)
+	if resErr != nil {
+		repositories.RollbackTransaction(rs.runnersRepository, rs.resultsRepository)
+		return resErr
 	}
+	repositories.CommitTransaction(rs.runnersRepository, rs.resultsRepository)
 	return nil
 }
 

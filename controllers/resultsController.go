@@ -5,8 +5,9 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"runners-postgresql/models"
-	"runners-postgresql/services"
+
+	"github.com/kyleochata/runrun/models"
+	"github.com/kyleochata/runrun/services"
 
 	"github.com/gin-gonic/gin"
 )

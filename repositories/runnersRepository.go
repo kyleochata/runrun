@@ -3,7 +3,6 @@ package repositories
 import (
 	"database/sql"
 	"net/http"
-	"runners-postgresql/models"
 
 	"github.com/kyleochata/runrun/models"
 )
@@ -51,7 +50,7 @@ func (rr RunnersRepository) CreateRunner(runner *models.Runner) (*models.Runner,
 		}
 	}
 
-	if rows.Err() != nil {
+	if err := rows.Err(); err != nil {
 		return nil, &models.ResponseError{
 			Message: err.Error(),
 			Status:  http.StatusInternalServerError,
@@ -187,7 +186,7 @@ func (rr RunnersRepository) GetRunner(runnerId string) (*models.Runner, *models.
 			}
 		}
 	}
-	if rows.Err() != nil {
+	if err := rows.Err(); err != nil {
 		return nil, &models.ResponseError{
 			Message: err.Error(),
 			Status:  http.StatusInternalServerError,
@@ -245,7 +244,7 @@ func (rr RunnersRepository) GetAllRunners() ([]*models.Runner, *models.ResponseE
 		}
 		runners = append(runners, runner)
 	}
-	if rows.Err() != nil {
+	if err := rows.Err(); err != nil {
 		return nil, &models.ResponseError{
 			Message: err.Error(),
 			Status:  http.StatusInternalServerError,
@@ -277,6 +276,8 @@ func (rr RunnersRepository) GetRunnersByCountry(country string) ([]*models.Runne
 	var age int
 	var isActive bool
 
+	runners := make([]*models.Runner, 0)
+
 	for rows.Next() {
 		err := rows.Scan(&id, &firstName, &lastName, &age, &isActive, &country, &personalBest, &seasonBest)
 		if err != nil {
@@ -285,23 +286,25 @@ func (rr RunnersRepository) GetRunnersByCountry(country string) ([]*models.Runne
 				Status:  http.StatusInternalServerError,
 			}
 		}
+		runner := &models.Runner{
+			ID:           id,
+			FirstName:    firstName,
+			LastName:     lastName,
+			Age:          age,
+			IsActive:     isActive,
+			Country:      country,
+			PersonalBest: personalBest.String,
+			SeasonBest:   seasonBest.String,
+		}
+		runners = append(runners, runner)
 	}
-	if rows.Err() != nil {
+	if err := rows.Err(); err != nil {
 		return nil, &models.ResponseError{
 			Message: err.Error(),
 			Status:  http.StatusInternalServerError,
 		}
 	}
-	return &models.Runner{
-		ID:           id,
-		FirstName:    firstName,
-		LastName:     lastName,
-		Age:          age,
-		IsActive:     isActive,
-		Country:      country,
-		PersonalBest: personalBest.String,
-		SeasonBest:   seasonBest.String,
-	}, nil
+	return runners, nil
 }
 
 func (rr RunnersRepository) GetRunnersByYear(year int) ([]*models.Runner, *models.ResponseError) {
@@ -353,7 +356,7 @@ func (rr RunnersRepository) GetRunnersByYear(year int) ([]*models.Runner, *model
 		}
 		runners = append(runners, runner)
 	}
-	if rows.Err() != nil {
+	if err := rows.Err(); err != nil {
 		return nil, &models.ResponseError{
 			Message: err.Error(),
 			Status:  http.StatusInternalServerError,

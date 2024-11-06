@@ -3,7 +3,6 @@ package repositories
 import (
 	"database/sql"
 	"net/http"
-	"runners-postgresql/models"
 
 	"github.com/kyleochata/runrun/models"
 )
@@ -28,7 +27,7 @@ func (rr ResultsRepository) CreateResult(result *models.Result) (*models.Result,
 	rows, err := rr.transaction.Query(query, result.RunnerID, result.RaceResult, result.Location, result.Position, result.Year)
 	if err != nil {
 		return nil, &models.ResponseError{
-			Message: err.Error(),
+			Message: "no results found",
 			Status:  http.StatusInternalServerError,
 		}
 	}
@@ -46,7 +45,7 @@ func (rr ResultsRepository) CreateResult(result *models.Result) (*models.Result,
 				}
 			}
 		}
-		if rows.Err() != nil {
+		if err != nil {
 			return nil, &models.ResponseError{
 				Message: err.Error(),
 				Status:  http.StatusInternalServerError,
@@ -89,7 +88,7 @@ func (rr ResultsRepository) DeleteResult(resultId string) (*models.Result, *mode
 			}
 		}
 	}
-	if rows.Err() != nil {
+	if err := rows.Err(); err != nil {
 		return nil, &models.ResponseError{
 			Message: err.Error(),
 			Status:  http.StatusInternalServerError,
@@ -164,7 +163,7 @@ func (rr ResultsRepository) GetPersonalBestResults(runnerId string) (string, *mo
 			}
 		}
 	}
-	if rows.Err() != nil {
+	if err := rows.Err(); err != nil {
 		return "", &models.ResponseError{
 			Message: err.Error(),
 			Status:  http.StatusInternalServerError,
@@ -197,7 +196,7 @@ func (rr ResultsRepository) GetSeasonBestResults(runnerId string, year int) (str
 			}
 		}
 	}
-	if rows.Err() != nil {
+	if err := rows.Err(); err != nil {
 		return "", &models.ResponseError{
 			Message: err.Error(),
 			Status:  http.StatusInternalServerError,

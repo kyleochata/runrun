@@ -3,9 +3,10 @@ package server
 import (
 	"database/sql"
 	"log"
-	"runners-postgresql/controllers"
-	"runners-postgresql/repositories"
-	"runners-postgresql/services"
+
+	"github.com/kyleochata/runrun/controllers"
+	"github.com/kyleochata/runrun/repositories"
+	"github.com/kyleochata/runrun/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"

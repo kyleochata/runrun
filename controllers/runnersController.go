@@ -5,8 +5,9 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"runners-postgresl/services"
-	"runners-postgresql/models"
+
+	"github.com/kyleochata/runrun/models"
+	"github.com/kyleochata/runrun/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,6 +40,29 @@ func (rc RunnersController) CreateRunner(ctx *gin.Context) {
 	responseErr := rc.runnersService.UpdateRunner(&runner)
 	if responseErr != nil {
 		ctx.AbortWithStatusJSON(responseErr.Status, responseErr)
+		return
+	}
+	ctx.Status(http.StatusNoContent)
+}
+
+func (rc RunnersController) UpdateRunner(ctx *gin.Context) {
+	body, err := io.ReadAll(ctx.Request.Body)
+	if err != nil {
+		log.Println("Error while reading: update runner request body", err)
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	var runner models.Runner
+	err = json.Unmarshal(body, &runner)
+	if err != nil {
+		log.Println("Error while unmarshaling: update runner req body", err)
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	resErr := rc.runnersService.UpdateRunner(&runner)
+	if resErr != nil {
+		ctx.AbortWithStatusJSON(resErr.Status, resErr)
 		return
 	}
 	ctx.Status(http.StatusNoContent)
