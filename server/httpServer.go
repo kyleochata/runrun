@@ -17,22 +17,27 @@ type HttpServer struct {
 	router            *gin.Engine
 	runnersController *controllers.RunnersController
 	resultsController *controllers.ResultsController
+	usersController   *controllers.UsersController
 }
 
 func InitHttpServer(config *viper.Viper, dbHandler *sql.DB) HttpServer {
 	runnersRepo := repositories.NewRunnersRepository(dbHandler)
 	resultRepo := repositories.NewResultsRepository(dbHandler)
+	usersRepo := repositories.NewUsersRepository(dbHandler)
 	runnersService := services.NewRunnersService(runnersRepo, resultRepo)
 	resultsService := services.NewResultsService(resultRepo, runnersRepo)
-	runnersController := controllers.NewRunnersController(runnersService)
-	resultsController := controllers.NewResultsController(resultsService)
-	router := setupServer(runnersController, resultsController)
+	usersService := services.NewUsersService(usersRepo)
+	runnersController := controllers.NewRunnersController(runnersService, usersService)
+	resultsController := controllers.NewResultsController(resultsService, usersService)
+	usersController := controllers.NewUsersController(usersService)
+	router := setupServer(runnersController, resultsController, usersController)
 
 	return HttpServer{
 		config:            config,
 		router:            router,
 		runnersController: runnersController,
 		resultsController: resultsController,
+		usersController:   usersController,
 	}
 }
 
@@ -43,7 +48,7 @@ func (hs HttpServer) Start() {
 	}
 }
 
-func setupServer(runnersController *controllers.RunnersController, resultsController *controllers.ResultsController) *gin.Engine {
+func setupServer(runnersController *controllers.RunnersController, resultsController *controllers.ResultsController, usersController *controllers.UsersController) *gin.Engine {
 	router := gin.Default()
 
 	router.POST("/runner", runnersController.CreateRunner)
@@ -56,5 +61,7 @@ func setupServer(runnersController *controllers.RunnersController, resultsContro
 	router.POST("/result", resultsController.CreateResult)
 	router.DELETE("/result/:id", resultsController.DeleteResult)
 
+	router.POST("/login", usersController.Login)
+	router.POST("/logout", usersController.Logout)
 	return router
 }

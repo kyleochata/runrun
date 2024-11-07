@@ -14,15 +14,29 @@ import (
 
 type ResultsController struct {
 	resultsService *services.ResultsService
+	usersService   *services.UsersService
 }
 
-func NewResultsController(resultsService *services.ResultsService) *ResultsController {
+func NewResultsController(resultsService *services.ResultsService, usersService *services.UsersService) *ResultsController {
 	return &ResultsController{
 		resultsService: resultsService,
+		usersService:   usersService,
 	}
 }
 
 func (rc ResultsController) CreateResult(ctx *gin.Context) {
+
+	accessToken := ctx.Request.Header.Get("Token")
+	auth, authErr := rc.usersService.AuthorizeUser(accessToken, []string{ROLE_ADMIN})
+	if authErr != nil {
+		ctx.JSON(authErr.Status, authErr)
+		return
+	}
+	if !auth {
+		ctx.Status(http.StatusUnauthorized)
+		return
+	}
+
 	body, err := io.ReadAll(ctx.Request.Body)
 	if err != nil {
 		log.Println("Error while reading"+" create result request body", err)
@@ -45,6 +59,18 @@ func (rc ResultsController) CreateResult(ctx *gin.Context) {
 }
 
 func (rc ResultsController) DeleteResult(ctx *gin.Context) {
+
+	accessToken := ctx.Request.Header.Get("Token")
+	auth, authErr := rc.usersService.AuthorizeUser(accessToken, []string{ROLE_ADMIN})
+	if authErr != nil {
+		ctx.JSON(authErr.Status, authErr)
+		return
+	}
+	if !auth {
+		ctx.Status(http.StatusUnauthorized)
+		return
+	}
+
 	resultId := ctx.Param("id")
 	err := rc.resultsService.DeleteResult(resultId)
 	if err != nil {
